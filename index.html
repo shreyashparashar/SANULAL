@@ -14,7 +14,7 @@
    Leave apiKey empty and the site still works, just without sync.
    =================================================================== */
 window.SANU_CONFIG = {
-   firebase: {
+    firebase: {
     apiKey:     "AIzaSyDfdWwDkaP23PH4fQmRSvaK808yz59cTjo",
     authDomain: "sanulal.firebaseapp.com",
     projectId:  "sanulal",
@@ -3060,7 +3060,7 @@ function songs(){return ((window.DATA&&window.DATA.songs)||[]).filter(function(s
 function niceD(d){var p=d.split('-'),M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return (+p[2])+' '+M[+p[1]-1]+' '+p[0]}
 
 var GAMES={
- ttt:{name:'Tic-tac-toe',emoji:'⭕',kind:'turn',blurb:'🧿 against 🦁. Three in a row wins.',rules:'Take turns placing your piece. Get three in a row, across, down or diagonal.',
+ ttt:{name:'Tic-tac-toe',emoji:'⭕',kind:'turn',blurb:'💖 against 🦁. Three in a row wins.',rules:'Take turns placing your piece. Get three in a row, across, down or diagonal.',
   init:function(){return{b:[null,null,null,null,null,null,null,null,null]}},
   render:function(box,g,c){var w=lines3(g.s.b),hl=w?w.l:[];box.innerHTML='<div class="ttt">'+g.s.b.map(function(v,i){return '<button type="button" data-i="'+i+'" class="'+(v?'f '+v:'')+(hl.indexOf(i)>=0?' win':'')+'"'+(v||!c.my?' disabled':'')+' aria-label="Square '+(i+1)+'">'+(v?TOK[v]:'')+'</button>'}).join('')+'</div>';
    box.querySelector('.ttt').onclick=function(e){var b=e.target.closest('button');if(!b||b.disabled)return;tick();var s=copy(g.s);s.b[+b.dataset.i]=c.me;var r=lines3(s.b);if(r)c.end(s,r.w==='draw'?null:r.w);else c.next(s)}}},
