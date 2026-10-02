@@ -3029,7 +3029,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 (function(){
 'use strict';
 var S=window.SANU||{};
-var NAME={her:'Sanu',him:'Sheru'},TOK={her:'🧿',him:'🦁'},OTHER={her:'him',him:'her'};
+var NAME={her:'Sanu',him:'Sheru'},TOK={her:'❤️',him:'🦁'},OTHER={her:'him',him:'her'};
 var $=function(s,r){return (r||document).querySelector(s)};
 function online(){return !!(S.user&&S.db)}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
@@ -3072,7 +3072,7 @@ function songs(){return ((window.DATA&&window.DATA.songs)||[]).filter(function(s
 function niceD(d){var p=d.split('-'),M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return (+p[2])+' '+M[+p[1]-1]+' '+p[0]}
 
 var GAMES={
- ttt:{name:'Tic-tac-toe',emoji:'⭕',kind:'turn',blurb:'🧿 against 🦁. Three in a row wins.',rules:'Take turns placing your piece. Get three in a row, across, down or diagonal.',
+ ttt:{name:'Tic-tac-toe',emoji:'⭕',kind:'turn',blurb:'❤️ against 🦁. Three in a row wins.',rules:'Take turns placing your piece. Get three in a row, across, down or diagonal.',
   init:function(){return{b:[null,null,null,null,null,null,null,null,null]}},
   render:function(box,g,c){var w=lines3(g.s.b),hl=w?w.l:[];box.innerHTML='<div class="ttt">'+g.s.b.map(function(v,i){return '<button type="button" data-i="'+i+'" class="'+(v?'f '+v:'')+(hl.indexOf(i)>=0?' win':'')+'"'+(v||!c.my?' disabled':'')+' aria-label="Square '+(i+1)+'">'+(v?TOK[v]:'')+'</button>'}).join('')+'</div>';
    box.querySelector('.ttt').onclick=function(e){var b=e.target.closest('button');if(!b||b.disabled)return;tick();var s=copy(g.s);s.b[+b.dataset.i]=c.me;var r=lines3(s.b);if(r)c.end(s,r.w==='draw'?null:r.w);else c.next(s)}}},
@@ -3390,7 +3390,7 @@ function draw(S){var b=$('#abody',dlg);if(!b)return;var kv=state.kv,p=state.pres
   h+='<div class="acard"><p class="al">Her answers</p><p class="av">'+qn+'<small>/7</small></p><p class="as"><a href="#qs" class="ajump">Read them</a></p></div>';
   h+='<div class="acard"><p class="al">Little things</p><ul class="alist"><li>🫂 Hugs held: <b>'+(kv.hugs||0)+'</b></li><li>🚨 Overthinking button: <b>'+(kv.sos||0)+'</b></li><li>🍞 Nutella slices: <b>'+(kv.slices||0)+'</b></li><li>🫧 Bubbles popped: <b>'+((kv.props||[]).length)+'</b></li><li>🛂 Stamps: <b>'+stamps.length+'/6</b></li></ul></div>';
   h+='<div class="acard"><p class="al">Envelopes opened</p><p class="av">'+env.length+'<small>/7</small></p><p class="as">'+(env.length?esc(env.map(function(i){return ENV[i]}).filter(Boolean).join('; ')):'None yet')+'</p></div>';
-  h+='<div class="acard awide"><p class="al">Games</p><p class="av ag"><span>🧿 Sanu <b>'+W.her+'</b></span><em>wins</em><span><b>'+W.him+'</b> Sheru 🦁</span></p>'+(Object.keys(per).length?'<table class="atab">'+Object.keys(per).map(function(g){var x=per[g];return '<tr><td>'+(G[g]?G[g].emoji+' '+G[g].name:g)+'</td><td>'+x.her+'</td><td>'+x.him+'</td><td>'+(x.draws?x.draws+' draw'+(x.draws>1?'s':''):'')+'</td></tr>'}).join('')+'</table>':'<p class="as">No games finished yet.</p>')+'</div>';
+  h+='<div class="acard awide"><p class="al">Games</p><p class="av ag"><span>❤️ Sanu <b>'+W.her+'</b></span><em>wins</em><span><b>'+W.him+'</b> Sheru 🦁</span></p>'+(Object.keys(per).length?'<table class="atab">'+Object.keys(per).map(function(g){var x=per[g];return '<tr><td>'+(G[g]?G[g].emoji+' '+G[g].name:g)+'</td><td>'+x.her+'</td><td>'+x.him+'</td><td>'+(x.draws?x.draws+' draw'+(x.draws>1?'s':''):'')+'</td></tr>'}).join('')+'</table>':'<p class="as">No games finished yet.</p>')+'</div>';
   h+='</div>';
   h+='<div class="acard"><p class="al">Send her a surprise note</p><p class="as">It pops up on her screen the next time she opens the site (or right away if she\'s on it).</p><textarea id="anote" rows="3" maxlength="600" placeholder="Write something for her..."></textarea><button type="button" class="gbtn2" id="asend">Send the note 💌</button>'+
     (state.notes.length?'<ul class="anotes">'+state.notes.slice(0,6).map(function(n){return '<li><span>'+esc(n.text)+'</span><small>'+(n.seen?'Seen '+ago(n.seenAt):'Not seen yet')+'  ·  sent '+ago(n.ms)+'</small><button type="button" data-del="'+n._id+'" aria-label="Delete note">×</button></li>'}).join('')+'</ul>':'')+'</div>';
