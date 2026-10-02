@@ -14,7 +14,7 @@
    Leave apiKey empty and the site still works, just without sync.
    =================================================================== */
 window.SANU_CONFIG = {
-   firebase: {
+  firebase: {
     apiKey:     "AIzaSyDfdWwDkaP23PH4fQmRSvaK808yz59cTjo",
     authDomain: "sanulal.firebaseapp.com",
     projectId:  "sanulal",
@@ -1040,6 +1040,17 @@ body.chatting #toast{bottom:auto;top:calc(70px + env(safe-area-inset-top,0px))}
 .actl button{background:#F2F4FA;border-radius:999px;padding:9px 14px;font-weight:800;font-size:14px}
 .actl button.danger{background:#FFE1E4;color:#c4213b}
 .gnote{font-family:var(--hand);font-size:22px;color:#fff;background:rgba(255,255,255,.1);border-radius:18px;padding:16px}
+.tn{width:100%;display:flex;flex-direction:column;align-items:center}
+.tnhud{display:flex;gap:10px;justify-content:center;margin:4px 0 10px;width:100%;max-width:440px}
+.tns{flex:1;background:#fff;border-radius:16px;padding:8px 12px;display:flex;align-items:center;gap:8px;box-shadow:0 4px 12px -6px rgba(0,0,0,.25)}
+.tns .tnp{font-weight:800;font-size:13px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tns b{font-family:var(--disp);font-weight:400;font-size:24px;color:var(--coral);min-width:34px;text-align:center}
+.tns i{font-style:normal;color:var(--gold);font-size:12px;letter-spacing:2px;min-width:18px}
+.tncw{position:relative;border-radius:22px;overflow:hidden;box-shadow:var(--shadow)}
+.tnc{display:block;touch-action:none;cursor:pointer;-webkit-user-select:none;user-select:none}
+.tnmsg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);background:rgba(20,20,43,.82);color:#fff;font-weight:800;font-size:17px;padding:10px 18px;border-radius:999px;opacity:0;transition:.3s var(--spring);pointer-events:none;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis}
+.tnmsg.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.tnctl{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;align-items:center;margin-top:10px;font-size:13px;font-weight:700;color:#7a7f99}
 
 </style>
 </head>
@@ -1845,7 +1856,7 @@ body.chatting #toast{bottom:auto;top:calc(70px + env(safe-area-inset-top,0px))}
   <div class="wide">
     <p class="kick"><span class="bonus">Game room</span><svg class="ic"><use href="#i-dice"/></svg>For both of you<span class="tm"></span></p>
     <h2 class="h">The game room</h2>
-    <p class="lede">Eleven games for two. Some you play turn by turn, even hours apart, and it pings whoever's turn it is. Some you play live, at the same time, from two different cities.</p>
+    <p class="lede">Twelve games for two. Some you play turn by turn, even hours apart, and it pings whoever's turn it is. Some you play live, at the same time, from two different cities.</p>
     <div class="gscore" id="gscore"></div>
     <p class="gmode" id="gmode"></p>
     <div class="ggrid" id="ggrid"></div>
@@ -3036,6 +3047,7 @@ function lget(t){try{return JSON.parse(localStorage.getItem(LK+t))}catch(e){retu
 function lset(t,v){try{localStorage.setItem(LK+t,JSON.stringify(v))}catch(e){}(subs[t]||[]).slice().forEach(function(f){f(v)})}
 function ref(t){return S.db.collection('games').doc(t)}
 function clean(o){return JSON.parse(JSON.stringify(o))}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
 function setPath(o,p,v){var k=p.split('.'),x=o;for(var i=0;i<k.length-1;i++){if(x[k[i]]==null||typeof x[k[i]]!=='object')x[k[i]]={};x=x[k[i]]}x[k[k.length-1]]=v}
 function fail(){say('That move didn\'t save. Check your internet and try again.')}
 function watch(t,cb){if(online())return ref(t).onSnapshot(function(d){cb(d.exists?d.data():null)},function(){});subs[t]=(subs[t]||[]).concat([cb]);setTimeout(function(){cb(lget(t))});return function(){subs[t]=(subs[t]||[]).filter(function(f){return f!==cb})}}
@@ -3168,6 +3180,102 @@ var GAMES={
    b.addEventListener('pointerdown',function(e){e.preventDefault();if(!live)return;n++;nn.textContent=n+' taps';b.classList.remove('pp');void b.offsetWidth;b.classList.add('pp')})}}
 };
 GAMES.mem.photo=true;
+/* ---------- Tennis: live 1v1 over the network, or practice against Robo Sheru ---------- */
+var TN=(function(){
+var BASE={her:.9,him:.1},R=.13,SPD=1.25;
+function wv(x,y,me){return me==='him'?[1-x,1-y]:[x,y]}
+function call(p,q){var L=['0','15','30','40'];if(p>=3&&q>=3){if(p===q)return['Deuce',''];return p>q?['Ad','']:['','Ad']}return[L[Math.min(p,3)],L[Math.min(q,3)]]}
+function sfx(f,d){try{window.__thud&&window.__thud(f,d||.06,.35)}catch(e){}}
+function build(box,g,c,mode){
+  var me=mode==='bot'?'her':(online()?S.role:'her'),op=OTHER[me],E={mode:mode,me:me,op:op,s:copy(g.s),x:{her:.5,him:.5},tx:.5,flight:null,lastN:-1,tilt:0,msg:'',msgT:0,swing:{her:0,him:0},alive:true,botT:.5,keys:{}};
+  box.innerHTML='<div class="tn"><div class="tnhud" id="tnhud"></div><div class="tncw"><canvas class="tnc"></canvas><div class="tnmsg" id="tnmsg"></div></div><div class="tnctl"><span>Drag anywhere on the court, or use ← →</span><button type="button" class="glink" id="tntilt">Tilt to aim</button>'+(mode==='bot'?'':'<button type="button" class="glink" id="tnprac">Practice with Robo Sheru</button>')+'</div></div>';
+  var cv=box.querySelector('.tnc'),ctx=cv.getContext('2d'),hud=box.querySelector('#tnhud'),mb=box.querySelector('#tnmsg');
+  function size(){var w=Math.min(box.clientWidth||360,440),h=Math.round(w*1.32),d=Math.min(2,window.devicePixelRatio||1);cv.style.width=w+'px';cv.style.height=h+'px';cv.width=w*d;cv.height=h*d;ctx.setTransform(d,0,0,d,0,0);E.W=w;E.H=h}size();addEventListener('resize',size);
+  function toWorldX(px){var r=cv.getBoundingClientRect(),u=(px-r.left)/r.width;u=clamp((u-.5)/.86+.5,.04,.96);return me==='him'?1-u:u}
+  cv.addEventListener('pointerdown',function(e){cv.setPointerCapture(e.pointerId);E.drag=true;E.tx=toWorldX(e.clientX);tap()});
+  cv.addEventListener('pointermove',function(e){if(E.drag)E.tx=toWorldX(e.clientX)});
+  cv.addEventListener('pointerup',function(){E.drag=false});cv.addEventListener('pointercancel',function(){E.drag=false});
+  function kd(e){if(!E.alive||!document.body.contains(cv))return;if(e.key==='ArrowLeft'||e.key==='ArrowRight'){E.keys[e.key]=e.type==='keydown';e.preventDefault()}if(e.type==='keydown'&&(e.key===' '||e.key==='Enter')){tap();e.preventDefault()}}
+  addEventListener('keydown',kd);addEventListener('keyup',kd);
+  box.querySelector('#tntilt').onclick=function(){var go=function(){addEventListener('deviceorientation',function(ev){var gm=ev.gamma||0;E.tilt=clamp(gm/28,-1,1)*(me==='him'?-1:1)});box.querySelector('#tntilt').textContent='Tilt is on'};
+    if(window.DeviceOrientationEvent&&DeviceOrientationEvent.requestPermission)DeviceOrientationEvent.requestPermission().then(function(p){if(p==='granted')go();else say('Tilt needs motion permission. You can still aim with where the ball hits your racket.')},function(){say('Tilt isn\'t available here.')});else if(window.DeviceOrientationEvent)go();else say('Tilt isn\'t available on this device.')};
+  var pr=box.querySelector('#tnprac');if(pr)pr.onclick=function(){E.alive=false;box.dataset.key='bot';var b2=build(box,{s:GAMES.tennis.init(me),gid:'bot'},c,'bot');box.__E=b2};
+  /* positions: mine to my own doc, theirs from theirs */
+  var unsub=null,lastSent=-1,sendT=0;
+  if(mode==='net'){unsub=S.db.collection('games').doc('tennis_'+op).onSnapshot(function(d){var x=d.exists?d.data().x:null;if(typeof x==='number')E.rx=x},function(){})}
+  function sendPos(t){if(mode!=='net'||t-sendT<300||Math.abs(E.x[me]-lastSent)<.01)return;sendT=t;lastSent=E.x[me];S.db.collection('games').doc('tennis_'+me).set({x:Math.round(E.x[me]*1000)/1000}).catch(function(){})}
+  function say2(m,ms){E.msg=m;E.msgT=performance.now()+(ms||1300)}
+  function write(f){if(mode==='bot'){Object.keys(f).forEach(function(k){if(k.indexOf('s.')===0)setPath(E,k,f[k])});onState();return}c.patch(f)}
+  function serveReady(){return E.s.phase==='serve'&&E.s.server===me&&performance.now()>E.msgT-300}
+  function tap(){if(E.s.phase==='lobby'&&mode==='net'&&!E.s.ready[me]){var f={};f['s.ready.'+me]=true;if(E.s.ready[op])f['s.phase']='serve';c.patch(f);return}
+    if(serveReady()){var x0=E.x[me],x1=.25+Math.random()*.5;hit({n:E.s.n+1,by:me,x0:x0,x1:x1,D:1.5,rally:0},{'s.phase':'rally'})}}
+  function hit(h,extra){E.swing[h.by]=performance.now();sfx(520,.05);var f=Object.assign({'s.hit':h,'s.n':h.n},extra||{});E.s.hit=h;E.s.n=h.n;E.lastN=h.n;startFlight(h);write(f)}
+  function startFlight(h){E.flight={h:h,t0:performance.now(),D:h.D*1000,arrived:false}}
+  function point(winner){var s=copy(E.s);s.pts[winner]++;var p=s.pts[winner],q=s.pts[OTHER[winner]],msg=NAME[winner]+'\'s point';
+    if(p>=4&&p-q>=2){s.gms[winner]++;s.pts={her:0,him:0};s.server=OTHER[s.server];msg='Game, '+NAME[winner]+'!';if(s.gms[winner]>=2){s.phase='done';s.hit=null;E.flight=null;
+      if(mode==='bot'){E.s=s;say2(winner===me?'You win! 🎾':'Robo Sheru wins. Rematch?',99999);onState();return}c.end(s,winner);return}}
+    s.phase='serve';s.hit=null;s.msg=msg;s.msgId=Date.now();E.flight=null;if(mode==='bot'){E.s=s;E.lastMsg=s.msgId;say2(msg);onState();return}c.patch({'s.pts':s.pts,'s.gms':s.gms,'s.server':s.server,'s.phase':'serve','s.hit':null,'s.msg':msg,'s.msgId':s.msgId})}
+  function aim(by){var off=clamp((E.flight?E.flight.h.x1:.5)-E.x[by],-R,R)/R,tilt=by===me?E.tilt:0;return clamp(.5-off*.36+tilt*.34+(Math.random()-.5)*.14,.1,.9)}
+  function arrive(){var f=E.flight,h=f.h,rcv=OTHER[h.by];f.arrived=true;
+    var local=mode==='bot'||rcv===me;if(!local)return;
+    var who=rcv,px=E.x[who];if(Math.abs(px-h.x1)<=R){var D=Math.max(.78,1.32-.035*(h.rally+1));hit({n:h.n+1,by:who,x0:px,x1:aim(who),D:D,rally:h.rally+1})}
+    else{sfx(140,.12);point(h.by)}}
+  E.onSnap=function(g2){E.s=copy(g2.s);onState()};
+  function onState(){var s=E.s;if(s.hit&&s.n!==E.lastN){E.lastN=s.n;if(s.hit.by!==me||mode==='bot'){startFlight(s.hit);E.swing[s.hit.by]=performance.now();sfx(480,.05)}}
+    if(!s.hit)E.flight=null;
+    if(s.msgId&&s.msgId!==E.lastMsg){E.lastMsg=s.msgId;say2(s.msg)}
+    if(mode==='net'&&s.phase==='lobby'&&s.ready.her&&s.ready.him&&me==='her')c.patch({'s.phase':'serve'});
+    paintHud()}
+  function paintHud(){var s=E.s,a=call(s.pts[me],s.pts[op]),nm=mode==='bot'?'Robo Sheru 🤖':NAME[op]+' '+TOK[op];
+    hud.innerHTML='<div class="tns"><span class="tnp me">'+TOK[me]+' '+(mode==='bot'?'You':NAME[me])+'</span><b>'+a[0]+'</b><i>'+'●'.repeat(s.gms[me])+'</i></div><div class="tns"><span class="tnp">'+nm+'</span><b>'+a[1]+'</b><i>'+'●'.repeat(s.gms[op])+'</i></div>'}
+  function centerMsg(){var s=E.s,now=performance.now();if(now<E.msgT)return E.msg;
+    if(s.phase==='lobby'&&mode==='net')return s.ready[me]?('Waiting for '+NAME[op]+' to tap ready...'):'Tap the court when you\'re ready';
+    if(s.phase==='serve')return s.server===me?'Tap to serve 🎾':(mode==='bot'?'Robo Sheru is serving...':NAME[op]+' is serving...');
+    if(s.phase==='done')return E.msg||'Match over';
+    if(E.flight&&E.flight.arrived&&mode==='net'&&E.flight.h.by===me&&now-E.flight.t0-E.flight.D>2500)return 'Waiting for '+NAME[op]+'...';return ''}
+  /* robot */
+  var botServeAt=0;function bot(dt,now){if(mode!=='bot')return;var s=E.s,b='him',tgt=.5;
+    if(E.flight&&E.flight.h.by===me){var f=E.flight,el=(now-f.t0)/f.D;if(el>.18)tgt=f.h.x1+(E.botErr||0)}
+    else{var rl=E.flight?E.flight.h.rally:0;E.botErr=(Math.random()-.5)*(.12+Math.min(.34,rl*.035))}
+    var sp=.82;E.x[b]+=clamp(tgt-E.x[b],-sp*dt,sp*dt);
+    if(s.phase==='serve'&&s.server===b&&now>E.msgT){if(!botServeAt)botServeAt=now+900;if(now>botServeAt){botServeAt=0;hit({n:s.n+1,by:b,x0:E.x[b],x1:.25+Math.random()*.5,D:1.5,rally:0},{'s.phase':'rally'})}}}
+  /* draw */
+  function P(u,v){var cw=E.W*.86,top=E.H*.07,ch=E.H*.86,k=.74+.26*v;return[E.W/2+(u-.5)*cw*k,top+v*ch,k]}
+  function draw(now){var W=E.W,H=E.H;ctx.clearRect(0,0,W,H);
+    var g1=ctx.createLinearGradient(0,0,0,H);g1.addColorStop(0,'#1d3fae');g1.addColorStop(1,'#2E6CF6');ctx.fillStyle=g1;ctx.fillRect(0,0,W,H);
+    var a=P(0,0),b=P(1,0),c2=P(1,1),d=P(0,1);ctx.fillStyle='#3b7bff';ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.lineTo(c2[0],c2[1]);ctx.lineTo(d[0],d[1]);ctx.closePath();ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.95)';ctx.lineWidth=2.5;ctx.stroke();
+    function ln(u1,v1,u2,v2){var p=P(u1,v1),q=P(u2,v2);ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(q[0],q[1]);ctx.stroke()}
+    ctx.lineWidth=2;ln(.12,0,.12,1);ln(.88,0,.88,1);ln(.12,.28,.88,.28);ln(.12,.72,.88,.72);ln(.5,.28,.5,.72);
+    var n1=P(-.03,.5),n2=P(1.03,.5);ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(n1[0],n1[1]-2,n2[0]-n1[0],8);ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(n1[0],n1[1]-12);ctx.lineTo(n2[0],n2[1]-12);ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=1;for(var i=0;i<=24;i++){var xx=n1[0]+(n2[0]-n1[0])*i/24;ctx.beginPath();ctx.moveTo(xx,n1[1]-12);ctx.lineTo(xx,n1[1]);ctx.stroke()}
+    var items=[];['her','him'].forEach(function(r){var v=wv(E.x[r],BASE[r],me);items.push({v:v[1],f:function(){player(r,v,now)}})});
+    var bl=ballPos(now);if(bl){var v=wv(bl.x,bl.y,me);items.push({v:v[1]+.001,f:function(){ball(v,bl.z)}})}
+    items.sort(function(p,q){return p.v-q.v}).forEach(function(i){i.f()});
+    var m=centerMsg();mb.textContent=m;mb.classList.toggle('on',!!m)}
+  function player(r,v,now){var p=P(v[0],v[1]),k=p[2],rad=22*k;ctx.fillStyle='rgba(0,0,0,.25)';ctx.beginPath();ctx.ellipse(p[0],p[1]+rad*.9,rad*1.05,rad*.38,0,0,7);ctx.fill();
+    var sw=clamp((now-E.swing[r])/260,0,1),ang=(sw<1?Math.sin(sw*Math.PI)*1.4:0)*(v[1]>.5?-1:1),side=v[1]>.5?1:-1;
+    ctx.save();ctx.translate(p[0]+rad*.9,p[1]-rad*.1);ctx.rotate(-.5*side+ang);ctx.strokeStyle='#14142b';ctx.lineWidth=3.5*k;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-rad*1.1);ctx.stroke();ctx.fillStyle='rgba(255,255,255,.85)';ctx.strokeStyle=r==='her'?'#FF7EB6':'#FFC23D';ctx.lineWidth=3*k;ctx.beginPath();ctx.ellipse(0,-rad*1.55,rad*.42,rad*.55,0,0,7);ctx.fill();ctx.stroke();ctx.restore();
+    ctx.fillStyle=r==='her'?'#FF7EB6':'#FFC23D';ctx.beginPath();ctx.arc(p[0],p[1],rad,0,7);ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.stroke();
+    ctx.font=Math.round(rad*1.15)+'px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(mode==='bot'&&r==='him'?'🤖':TOK[r],p[0],p[1]+1)}
+  function ball(v,z){var p=P(v[0],v[1]),k=p[2];ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(p[0],p[1],7*k,3*k,0,0,7);ctx.fill();
+    var y=p[1]-z*E.H*.22*k;ctx.fillStyle='#E7FF4F';ctx.beginPath();ctx.arc(p[0],y,7.5*k,0,7);ctx.fill();ctx.strokeStyle='rgba(0,0,0,.25)';ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(p[0]-3*k,y,6*k,-.9,.9);ctx.stroke()}
+  function ballPos(now){var s=E.s;if(E.flight){var f=E.flight,h=f.h,u=clamp((now-f.t0)/f.D,0,1),y0=BASE[h.by],y1=BASE[OTHER[h.by]],x=h.x0+(h.x1-h.x0)*u,y=y0+(y1-y0)*u,b=.72,z=u<b?4*.9*(u/b)*(1-u/b):4*.35*((u-b)/(1-b))*(1-(u-b)/(1-b))+.04;
+      if(u>=b&&!f.bounced){f.bounced=true;sfx(260,.03)}return{x:x,y:y,z:Math.max(z,.04)}}
+    if(s.phase==='serve'){var sv=s.server;return{x:E.x[sv]+.05,y:BASE[sv],z:.5+.25*Math.abs(Math.sin(now/300))}}return null}
+  /* loop */
+  var last=performance.now();function loop(now){if(!E.alive||!document.body.contains(cv)){E.alive=false;removeEventListener('keydown',kd);removeEventListener('keyup',kd);removeEventListener('resize',size);if(unsub)unsub();return}
+    var dt=Math.min(.05,(now-last)/1000);last=now;var dir=(E.keys.ArrowRight?1:0)-(E.keys.ArrowLeft?1:0);if(dir)E.tx=clamp(E.x[me]+dir*.3*(me==='him'?-1:1),.04,.96);
+    E.x[me]+=clamp(E.tx-E.x[me],-SPD*dt,SPD*dt);if(mode==='net'&&typeof E.rx==='number')E.x[op]+=(E.rx-E.x[op])*Math.min(1,dt*10);
+    bot(dt,now);sendPos(now);if(E.flight&&!E.flight.arrived&&now-E.flight.t0>=E.flight.D)arrive();draw(now);requestAnimationFrame(loop)}
+  onState();requestAnimationFrame(loop);return E}
+return{render:function(box,g,c){var mode=online()?'net':'bot',key=g.gid+':'+mode;if(box.dataset.key==='bot'&&box.__E&&box.__E.alive)return;
+    if(box.dataset.key!==key||!box.__E||!box.__E.alive){box.dataset.key=key;box.__E=build(box,g,c,mode)}else box.__E.onSnap(g)}}
+})();
+GAMES.tennis={name:'Tennis',emoji:'🎾',kind:'live',blurb:'Live tennis. Run, auto swing, tilt to aim.',rules:'Drag left or right on the court (or use the arrow keys) to run. Your racket swings by itself when the ball reaches you. Where the ball meets your racket sets the angle, and on a phone you can turn on tilt to aim. Tap to serve. Four points wins a game, first to two games wins. If you\'re alone, practise against Robo Sheru.',
+  init:function(st){return{phase:online()?'lobby':'serve',ready:{her:false,him:false},server:st,hit:null,n:0,pts:{her:0,him:0},gms:{her:0,him:0},msg:''}},
+  render:function(box,g,c){TN.render(box,g,c)}};
+
 
 /* drawing canvas */
 function paintStrokes(cv,st){var x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,cv.width,cv.height);x.lineCap='round';x.lineJoin='round';
